@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 
@@ -22,9 +22,7 @@ class Document:
     source_url: str | None = None
     metadata: dict[str, str] = field(default_factory=dict)
     id: UUID = field(default_factory=uuid4)
-    created_at: datetime = field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     @property
     def page_count(self) -> int:

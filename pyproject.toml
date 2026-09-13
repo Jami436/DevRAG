@@ -20,6 +20,56 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Documentation",
 ]
+dependencies = [
+    "fastapi>=0.141,<1.0",
+    "uvicorn[standard]>=0.52,<1.0",
+    "pydantic>=2.13,<3.0",
+    "pydantic-settings>=2.15,<3.0",
+    "python-dotenv>=1.2,<2.0",
+    "pymupdf>=1.28,<2.0",
+    "sqlalchemy>=2.0,<3.0",
+    "psycopg[binary]>=3.3,<4.0",
+    "pgvector>=0.5,<1.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=9.0,<10.0",
+    "pytest-asyncio>=1.4,<2.0",
+    "httpx>=0.28,<1.0",
+]
+lint = [
+    "ruff>=0.16,<1.0",
+]
+type = [
+    "mypy>=2.0,<3.0",
+]
+dev = [
+    "devrag[test]",
+    "devrag[lint]",
+    "devrag[type]",
+]
 
 [project.urls]
 Repository = "https://github.com/Jami436/DevRAG"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "devrag"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "SIM", "UP", "RUF"]
+ignore = ["B008"]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unused_configs = true
+untyped_calls_exclude = ["pymupdf", "fitz"]

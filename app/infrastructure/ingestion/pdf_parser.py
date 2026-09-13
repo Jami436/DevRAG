@@ -13,20 +13,20 @@ class PDFParser:
             raise FileNotFoundError(f"Document not found: {file_path}")
 
         if file_path.suffix.lower() != ".pdf":
-            raise ValueError(
-                f"Unsupported file type: {file_path.suffix}"
-            )
+            raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
         pdf = pymupdf.open(file_path)
+        pages: list[DocumentPage] = []
 
         try:
-            pages = [
-                DocumentPage(
-                    page_number=index + 1,
-                    content=page.get_text().strip(),
+            for index in range(pdf.page_count):
+                page = pdf.load_page(index)
+                pages.append(
+                    DocumentPage(
+                        page_number=index + 1,
+                        content=page.get_text().strip(),
+                    )
                 )
-                for index, page in enumerate(pdf)
-            ]
         finally:
             pdf.close()
 
