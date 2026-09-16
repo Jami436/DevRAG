@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import ClassVar
 
 import pymupdf
 
@@ -8,11 +9,13 @@ from app.domain.documents.entities import Document, DocumentPage
 class PDFParser:
     """Parse PDF files into the DevRAG document domain model."""
 
+    SUPPORTED_EXTENSIONS: ClassVar[tuple[str, ...]] = (".pdf",)
+
     def parse(self, file_path: Path) -> Document:
         if not file_path.exists():
             raise FileNotFoundError(f"Document not found: {file_path}")
 
-        if file_path.suffix.lower() != ".pdf":
+        if file_path.suffix.lower() not in self.SUPPORTED_EXTENSIONS:
             raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
         pdf = pymupdf.open(file_path)

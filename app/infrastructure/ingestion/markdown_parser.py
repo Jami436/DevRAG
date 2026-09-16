@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import ClassVar
 
 from markdown_it import MarkdownIt
 from markdown_it.token import Token
@@ -12,11 +13,13 @@ _CONTENT_TOKEN_TYPES = ("code_block", "fence")
 class MarkdownParser:
     """Parse Markdown files into the DevRAG document domain model."""
 
+    SUPPORTED_EXTENSIONS: ClassVar[tuple[str, ...]] = (".md", ".markdown")
+
     def parse(self, file_path: Path) -> Document:
         if not file_path.exists():
             raise FileNotFoundError(f"Document not found: {file_path}")
 
-        if file_path.suffix.lower() not in (".md", ".markdown"):
+        if file_path.suffix.lower() not in self.SUPPORTED_EXTENSIONS:
             raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
         markdown = file_path.read_text(encoding="utf-8")

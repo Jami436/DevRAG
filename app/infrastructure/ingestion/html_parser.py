@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import ClassVar
 
 from bs4 import BeautifulSoup
 from bs4.element import Comment, Doctype, NavigableString, Tag
@@ -51,11 +52,13 @@ _BLOCK_TAGS = {
 class HTMLParser:
     """Parse HTML files into the DevRAG document domain model."""
 
+    SUPPORTED_EXTENSIONS: ClassVar[tuple[str, ...]] = (".html", ".htm")
+
     def parse(self, file_path: Path) -> Document:
         if not file_path.exists():
             raise FileNotFoundError(f"Document not found: {file_path}")
 
-        if file_path.suffix.lower() not in (".html", ".htm"):
+        if file_path.suffix.lower() not in self.SUPPORTED_EXTENSIONS:
             raise ValueError(f"Unsupported file type: {file_path.suffix}")
 
         soup = BeautifulSoup(file_path.read_text(encoding="utf-8"), "html.parser")
