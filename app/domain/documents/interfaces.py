@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Protocol
 
+from app.domain.documents.chunks import DocumentChunk
 from app.domain.documents.entities import Document
 
 
@@ -12,3 +13,8 @@ class DocumentParser(Protocol):
 class ParserRegistry(Protocol):
     def get_parser(self, file_path: Path) -> DocumentParser:
         """Return the parser registered for the given file's extension."""
+
+
+class Chunker(Protocol):
+    def chunk(self, document: Document) -> list[DocumentChunk]:
+        """Split a parsed document into a list of searchable chunks."""
