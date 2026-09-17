@@ -32,6 +32,9 @@ dependencies = [
     "sqlalchemy>=2.0,<3.0",
     "psycopg[binary]>=3.3,<4.0",
     "pgvector>=0.5,<1.0",
+    "alembic>=1.13,<2.0",
+    "openai>=1.0,<3.0",
+    "sentence-transformers>=3.0,<6.0",
 ]
 
 [project.optional-dependencies]
@@ -74,4 +77,18 @@ python_version = "3.13"
 plugins = ["pydantic.mypy"]
 strict = true
 warn_unused_configs = true
-untyped_calls_exclude = ["pymupdf", "fitz"]
+untyped_calls_exclude = [
+    "pymupdf",
+    "fitz",
+    "pgvector.sqlalchemy",
+    "sentence_transformers",
+]
+
+[[tool.mypy.overrides]]
+# Heavy typed dependency graph (sentence-transformers pulls in transformers,
+# tokenizers and torch). Skip it so mypy does not walk the whole tree.
+module = [
+    "sentence_transformers",
+    "sentence_transformers.*",
+]
+follow_imports = "skip"
