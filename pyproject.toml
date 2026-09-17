@@ -63,6 +63,9 @@ packages = ["app", "devrag"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "integration: tests requiring a live PostgreSQL with pgvector (set DATABASE_URL to a postgresql connection to run them)",
+]
 
 [tool.ruff]
 target-version = "py313"

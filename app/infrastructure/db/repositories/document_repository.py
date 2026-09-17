@@ -29,7 +29,7 @@ class DocumentRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def save_document(self, document: Document) -> DocumentModel:
+    def save_document(self, document: Document) -> None:
         model = self._session.get(DocumentModel, document.id)
         if model is None:
             model = DocumentModel(
@@ -47,7 +47,28 @@ class DocumentRepository:
             model.source_url = document.source_url
             model.metadata_ = dict(document.metadata)
         self._session.flush()
-        return model
+
+    def persist(
+        self,
+        document: Document,
+        chunks: list[DocumentChunk],
+        embeddings: list[list[float]] | None = None,
+    ) -> None:
+        """Persist a document and all of its chunk embeddings atomically.
+
+        The write is idempotent and self-consistent: re-ingesting the same
+        document replaces its chunk rows in place and prunes any stored chunk
+        whose index is no longer part of the ingest, so the stored state always
+        mirrors the last call exactly. All changes share one transaction; a
+        caller that rolls back on failure undoes the document record too.
+        """
+        self.save_document(document)
+        self.upsert_chunks(chunks, embeddings)
+        expected_indices = {chunk.chunk_index for chunk in chunks}
+        for chunk in self.get_chunks(document.id):
+            if chunk.chunk_index not in expected_indices:
+                self._session.delete(chunk)
+        self._session.flush()
 
     def upsert_chunks(
         self,

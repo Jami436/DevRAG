@@ -1,4 +1,3 @@
-import os
 from collections.abc import Iterator
 from typing import Any
 from uuid import uuid4
@@ -10,13 +9,11 @@ from sqlalchemy.pool import StaticPool
 
 from app.domain.documents.chunks import DocumentChunk
 from app.domain.documents.entities import Document, DocumentPage
+from app.domain.repositories.interfaces import (
+    DocumentRepository as DocumentRepositoryProtocol,
+)
 from app.infrastructure.db.base import Base
 from app.infrastructure.db.repositories.document_repository import DocumentRepository
-
-postgres_only = pytest.mark.skipif(
-    not os.environ.get("DATABASE_URL", "").startswith("postgresql"),
-    reason="requires a live PostgreSQL database with pgvector",
-)
 
 
 @pytest.fixture()
@@ -175,18 +172,52 @@ def test_delete_document(session: Session, document: Document) -> None:
     assert repo.count_documents() == 0
 
 
-@postgres_only
-def test_cosine_search_returns_nearest_chunks(
+def test_concrete_repository_implements_domain_contract() -> None:
+    for method in ("save_document", "upsert_chunks", "persist"):
+        assert hasattr(DocumentRepository, method)
+        assert hasattr(DocumentRepositoryProtocol, method)
+
+
+def test_persist_round_trips_document_chunks_and_embeddings(
     session: Session, document: Document, chunks: list[DocumentChunk]
 ) -> None:
     repo = DocumentRepository(session)
-    repo.save_document(document)
-    near = [1.0, 1.0]
-    far = [1.0, -1.0]
-    repo.upsert_chunks(chunks, embeddings=[near, far])
+    repo.persist(document, chunks, embeddings=[[1.0], [2.0]])
     session.commit()
 
-    results = repo.cosine_search(query_embedding=[0.9, 1.0], limit=2)
+    assert repo.get_document(document.id) is not None
+    stored = repo.get_chunks(document.id)
+    assert [(chunk.content, chunk.embedding) for chunk in stored] == [
+        ("first chunk", [1.0]),
+        ("second chunk", [2.0]),
+    ]
 
-    assert [result.chunk_index for result in results] == [0, 1]
-    assert results[0].score < results[1].score
+
+def test_persist_is_idempotent_and_prunes_stale_chunks(
+    session: Session, document: Document, chunks: list[DocumentChunk]
+) -> None:
+    repo = DocumentRepository(session)
+    repo.persist(document, chunks, embeddings=[[1.0], [2.0]])
+    session.commit()
+
+    chunks[0].content = "rewritten chunk"
+    repo.persist(document, chunks[:1], embeddings=[[9.0]])
+    session.commit()
+
+    stored = repo.get_chunks(document.id)
+    assert [(chunk.content, chunk.embedding) for chunk in stored] == [
+        ("rewritten chunk", [9.0]),
+    ]
+
+
+def test_persist_rolls_back_atomically_on_error(
+    session: Session, document: Document, chunks: list[DocumentChunk]
+) -> None:
+    repo = DocumentRepository(session)
+
+    with pytest.raises(ValueError, match="align"):
+        repo.persist(document, chunks, embeddings=[[1.0]])
+    session.rollback()
+
+    assert repo.count_documents() == 0
+    assert repo.get_chunks(document.id) == []
