@@ -9,6 +9,10 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://devrag:devrag@localhost:5432/devrag"
 
+    chunking_strategy: str = "section"
+    chunking_token_limit: int = 512
+    chunking_token_overlap: int = 64
+
     embedding_provider: str = "openai"
     openai_api_key: str | None = None
     openai_embedding_model: str = "text-embedding-3-small"

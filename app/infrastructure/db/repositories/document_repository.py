@@ -150,6 +150,12 @@ class DocumentRepository:
         self._session.flush()
         return True
 
+    def commit(self) -> None:
+        self._session.commit()
+
+    def close(self) -> None:
+        self._session.close()
+
     def cosine_search(
         self,
         query_embedding: list[float],

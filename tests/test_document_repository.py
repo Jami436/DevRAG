@@ -173,7 +173,7 @@ def test_delete_document(session: Session, document: Document) -> None:
 
 
 def test_concrete_repository_implements_domain_contract() -> None:
-    for method in ("save_document", "upsert_chunks", "persist"):
+    for method in ("save_document", "upsert_chunks", "persist", "commit", "close"):
         assert hasattr(DocumentRepository, method)
         assert hasattr(DocumentRepositoryProtocol, method)
 

@@ -29,3 +29,9 @@ class DocumentRepository(Protocol):
         embeddings: list[list[float]] | None = None,
     ) -> None:
         """Persist a document together with all of its chunk embeddings."""
+
+    def commit(self) -> None:
+        """Commit the current transaction."""
+
+    def close(self) -> None:
+        """Release the underlying session or resources."""
