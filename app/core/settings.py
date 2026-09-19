@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     llm_reranker_model: str = "gpt-4o-mini"
 
+    evaluation_golden_queries_path: str = "data/evaluation/golden_queries.json"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

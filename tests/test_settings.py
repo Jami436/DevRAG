@@ -19,6 +19,10 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.retrieval_hybrid_candidates == 50
     assert settings.retrieval_fusion_k == 60
     assert settings.reranker_provider == "cross_encoder"
+    assert (
+        settings.evaluation_golden_queries_path
+        == "data/evaluation/golden_queries.json"
+    )
 
 
 def test_settings_read_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
