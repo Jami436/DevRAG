@@ -20,6 +20,16 @@ class Settings(BaseSettings):
     embedding_dimension: int = 1536
     embedding_batch_size: int = 2048
 
+    retriever_top_k: int = 5
+    retrieval_hybrid_candidates: int = 50
+    retrieval_hybrid_vector_weight: float = 1.0
+    retrieval_hybrid_keyword_weight: float = 1.0
+    retrieval_fusion_k: int = 60
+
+    reranker_provider: str = "cross_encoder"
+    reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    llm_reranker_model: str = "gpt-4o-mini"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -15,6 +15,10 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.app_version == "0.1.0"
     assert settings.debug is True
     assert settings.api_v1_prefix == "/api/v1"
+    assert settings.retriever_top_k == 5
+    assert settings.retrieval_hybrid_candidates == 50
+    assert settings.retrieval_fusion_k == 60
+    assert settings.reranker_provider == "cross_encoder"
 
 
 def test_settings_read_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:

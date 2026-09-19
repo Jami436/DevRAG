@@ -2,6 +2,7 @@ from typing import Protocol
 
 from app.domain.documents.chunks import DocumentChunk
 from app.domain.documents.entities import Document
+from app.domain.retrieval.entities import RetrievedChunk
 
 
 class DocumentRepository(Protocol):
@@ -32,6 +33,32 @@ class DocumentRepository(Protocol):
 
     def commit(self) -> None:
         """Commit the current transaction."""
+
+    def close(self) -> None:
+        """Release the underlying session or resources."""
+
+
+class SearchRepository(Protocol):
+    """Read contract for multi-signal retrieval over persisted chunks."""
+
+    def keyword_search(
+        self, query_text: str, *, limit: int = 10
+    ) -> list[RetrievedChunk]:
+        """Run a full-text keyword search over chunk contents."""
+
+    def hybrid_search(
+        self,
+        *,
+        query_text: str,
+        query_embedding: list[float],
+        limit: int = 10,
+        candidates: int = 50,
+        vector_weight: float = 1.0,
+        keyword_weight: float = 1.0,
+        fusion_k: int = 60,
+        distance_threshold: float | None = None,
+    ) -> list[RetrievedChunk]:
+        """Fuse vector and keyword results into a single ranked list."""
 
     def close(self) -> None:
         """Release the underlying session or resources."""

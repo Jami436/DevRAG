@@ -12,6 +12,9 @@ from app.domain.documents.entities import Document, DocumentPage
 from app.domain.repositories.interfaces import (
     DocumentRepository as DocumentRepositoryProtocol,
 )
+from app.domain.repositories.interfaces import (
+    SearchRepository,
+)
 from app.infrastructure.db.base import Base
 from app.infrastructure.db.repositories.document_repository import DocumentRepository
 
@@ -176,6 +179,12 @@ def test_concrete_repository_implements_domain_contract() -> None:
     for method in ("save_document", "upsert_chunks", "persist", "commit", "close"):
         assert hasattr(DocumentRepository, method)
         assert hasattr(DocumentRepositoryProtocol, method)
+
+
+def test_concrete_repository_implements_search_contract() -> None:
+    for method in ("keyword_search", "hybrid_search", "close"):
+        assert hasattr(DocumentRepository, method)
+        assert hasattr(SearchRepository, method)
 
 
 def test_persist_round_trips_document_chunks_and_embeddings(
