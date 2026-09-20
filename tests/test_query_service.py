@@ -5,6 +5,7 @@ import pytest
 from app.domain.generation.interfaces import LLMProvider
 from app.domain.retrieval.entities import RetrievedChunk
 from app.services.query import QueryService, build_default_query_service
+from app.services.search import SearchService
 
 
 class _FakeEmbedder:
@@ -74,19 +75,29 @@ def _hit() -> RetrievedChunk:
     )
 
 
+def _service(
+    repo: _FakeSearchRepository,
+    provider: _Provider,
+    *,
+    top_k: int = 5,
+) -> QueryService:
+    return QueryService(
+        search_service=SearchService(
+            embedding_provider=_FakeEmbedder(),
+            search_repository_factory=lambda: repo,
+            reranker=_Reranker(),
+            top_k=top_k,
+            candidates=10,
+        ),
+        llm_provider=provider,
+    )
+
+
 def test_execute_retrieves_then_generates_with_citations() -> None:
     repo = _FakeSearchRepository()
     repo.results = [_hit(), _hit()]
     provider = _Provider()
-
-    service = QueryService(
-        embedding_provider=_FakeEmbedder(),
-        search_repository_factory=lambda: repo,
-        reranker=_Reranker(),
-        llm_provider=provider,
-        top_k=2,
-        candidates=10,
-    )
+    service = _service(repo, provider, top_k=2)
 
     answer = service.execute("what is a vector database?")
 
@@ -103,15 +114,7 @@ def test_execute_truncates_retrieval_to_requested_top_k() -> None:
     repo = _FakeSearchRepository()
     repo.results = [_hit() for _ in range(5)]
     provider = _Provider()
-
-    service = QueryService(
-        embedding_provider=_FakeEmbedder(),
-        search_repository_factory=lambda: repo,
-        reranker=_Reranker(),
-        llm_provider=provider,
-        top_k=5,
-        candidates=10,
-    )
+    service = _service(repo, provider, top_k=5)
 
     answer = service.execute("question", top_k=2)
 
@@ -125,15 +128,7 @@ def test_execute_uses_default_top_k_when_not_overridden() -> None:
     repo = _FakeSearchRepository()
     repo.results = [_hit() for _ in range(3)]
     provider = _Provider()
-
-    service = QueryService(
-        embedding_provider=_FakeEmbedder(),
-        search_repository_factory=lambda: repo,
-        reranker=_Reranker(),
-        llm_provider=provider,
-        top_k=3,
-        candidates=10,
-    )
+    service = _service(repo, provider, top_k=3)
 
     service.execute("question")
 
@@ -141,12 +136,7 @@ def test_execute_uses_default_top_k_when_not_overridden() -> None:
 
 
 def test_execute_rejects_non_positive_top_k() -> None:
-    service = QueryService(
-        embedding_provider=_FakeEmbedder(),
-        search_repository_factory=lambda: _FakeSearchRepository(),
-        reranker=_Reranker(),
-        llm_provider=_Provider(),
-    )
+    service = _service(_FakeSearchRepository(), _Provider(), top_k=5)
 
     with pytest.raises(ValueError, match="top_k"):
         service.execute("question", top_k=0)
@@ -164,8 +154,11 @@ def test_default_query_service_is_wired_from_settings(
 
     service = build_default_query_service()
 
-    assert isinstance(service._embedding_provider, OpenAIEmbeddingProvider)
-    assert isinstance(service._reranker, CrossEncoderReranker)
+    assert isinstance(service._search_service, SearchService)
+    assert isinstance(
+        service._search_service._embedding_provider, OpenAIEmbeddingProvider
+    )
+    assert isinstance(service._search_service._reranker, CrossEncoderReranker)
     assert isinstance(service._llm_provider, OpenAILLMProvider)
-    assert service._top_k == 5
-    assert service._candidates == 50
+    assert service._search_service._top_k == 5
+    assert service._search_service._candidates == 50

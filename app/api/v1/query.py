@@ -52,7 +52,7 @@ def _to_response(citation: Citation) -> CitationResponse:
 
 
 @router.post("/query", tags=["Query"])
-async def ask_question(
+def ask_question(
     request: QueryRequest,
     query_service: QueryService = Depends(get_query_service),
 ) -> QueryResponse:
