@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     reranker_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     llm_reranker_model: str = "gpt-4o-mini"
 
+    generation_provider: str = "openai"
+    generation_model: str = "gpt-4o-mini"
+    generation_max_tokens: int = 800
+    generation_max_excerpt_chars: int = 1000
+    generation_max_context_chars: int = 12000
+
     evaluation_golden_queries_path: str = "data/evaluation/golden_queries.json"
 
     model_config = SettingsConfigDict(

@@ -19,6 +19,11 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.retrieval_hybrid_candidates == 50
     assert settings.retrieval_fusion_k == 60
     assert settings.reranker_provider == "cross_encoder"
+    assert settings.generation_provider == "openai"
+    assert settings.generation_model == "gpt-4o-mini"
+    assert settings.generation_max_tokens == 800
+    assert settings.generation_max_excerpt_chars == 1000
+    assert settings.generation_max_context_chars == 12000
     assert (
         settings.evaluation_golden_queries_path
         == "data/evaluation/golden_queries.json"
