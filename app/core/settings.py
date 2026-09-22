@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -6,6 +8,9 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     debug: bool = True
     api_v1_prefix: str = "/api/v1"
+
+    log_level: str = "INFO"
+    log_format: Literal["json", "text"] = "json"
 
     database_url: str = "postgresql+psycopg://devrag:devrag@localhost:5432/devrag"
 

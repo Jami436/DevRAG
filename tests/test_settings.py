@@ -15,6 +15,8 @@ def test_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.app_version == "0.1.0"
     assert settings.debug is True
     assert settings.api_v1_prefix == "/api/v1"
+    assert settings.log_level == "INFO"
+    assert settings.log_format == "json"
     assert settings.retriever_top_k == 5
     assert settings.retrieval_hybrid_candidates == 50
     assert settings.retrieval_fusion_k == 60
@@ -35,6 +37,8 @@ def test_settings_read_from_environment(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setenv("APP_VERSION", "9.9.9")
     monkeypatch.setenv("DEBUG", "false")
     monkeypatch.setenv("API_V1_PREFIX", "/v2")
+    monkeypatch.setenv("LOG_LEVEL", "DEBUG")
+    monkeypatch.setenv("LOG_FORMAT", "text")
 
     settings = Settings(_env_file=None)
 
@@ -42,3 +46,5 @@ def test_settings_read_from_environment(monkeypatch: pytest.MonkeyPatch) -> None
     assert settings.app_version == "9.9.9"
     assert settings.debug is False
     assert settings.api_v1_prefix == "/v2"
+    assert settings.log_level == "DEBUG"
+    assert settings.log_format == "text"

@@ -18,7 +18,8 @@ DevRAG is under active development with a working end-to-end RAG pipeline: docum
 - **Grounded answer generation** — the LLM answers strictly from retrieved passages and `[n]` references are mapped back to structured **citations** (chunk id, page, excerpt)
 - **Retrieval evaluation** — **hit rate** and **mean reciprocal rank (MRR)** against a JSON golden-query set
 - **REST API** — document upload/list/get/delete, search, question answering, and liveness/readiness/version probes
-- **248 unit tests** covering the full stack, plus optional integration tests against live PostgreSQL + pgvector (256 total)
+- **Structured logging** — stdlib `logging` emitting JSON lines to stdout (configurable log level and text/JSON format), plus a middleware that logs one structured record per HTTP request
+- **256 unit tests** covering the full stack, plus optional integration tests against live PostgreSQL + pgvector (264 total)
 - **Strict quality gates** — ruff linting, mypy strict typing, pytest, Python 3.13
 
 ## Architecture
@@ -30,7 +31,7 @@ DevRAG follows a layered, hexagonal-style architecture:
 - **`app/infrastructure/`** — Concrete technology implementations: parsers, chunkers, embedding adapters, SQL/pgvector repository, rerankers, LLM providers, health probes, DB session
 - **`app/services/`** — Higher-level services that wire the default configurations and expose reusable endpoints (`SearchService`, `QueryService`, `DocumentService`)
 - **`app/api/v1/`** — FastAPI routes and Pydantic request/response schemas
-- **`app/core/`** — Central `Settings` (env-driven via pydantic-settings) and app config
+- **`app/core/`** — Central `Settings` (env-driven via pydantic-settings), app config, and structured logging setup
 
 ## Project Structure
 
@@ -38,7 +39,7 @@ DevRAG follows a layered, hexagonal-style architecture:
 devrag/
 ├── app/
 │   ├── api/v1/                 # FastAPI routers: documents, search, query, health
-│   ├── core/                   # Settings / configuration
+│   ├── core/                   # Settings / configuration / logging & middleware
 │   ├── domain/                 # Entities, ports/interfaces, pure logic (fusion, metrics, citations)
 │   ├── application/            # Use cases: ingest, retrieve, generate, evaluate
 │   ├── infrastructure/         # Parsers, chunkers, embeddings, rerankers, LLM, DB, health probes
@@ -92,6 +93,8 @@ Copy `.env` (or set the following environment variables) — see `app/core/setti
 | `RERANKER_PROVIDER` | `cross_encoder` | `cross_encoder`, `llm`, or `none` |
 | `GENERATION_PROVIDER` / `GENERATION_MODEL` | `openai` / `gpt-4o-mini` | LLM used to generate answers |
 | `EVALUATION_GOLDEN_QUERIES_PATH` | `data/evaluation/golden_queries.json` | Golden queries for eval |
+| `LOG_LEVEL` | `INFO` | Minimum severity for the root and uvicorn loggers |
+| `LOG_FORMAT` | `json` | Output format: `json` (structured, default) or `text` |
 
 ### Database setup
 
@@ -103,10 +106,26 @@ alembic upgrade head
 ### Running the API
 
 ```bash
+# Launch with structured JSON logging enabled (uses app/core/logging.py)
+python -m app.main
+
+# Or launch directly with uvicorn (default uvicorn log format applies unless --log-config is supplied)
 uvicorn app.main:app --reload
 ```
 
 Open the interactive docs at <http://127.0.0.1:8000/docs>.
+
+Logs are emitted to stdout as one JSON object per line, e.g.:
+
+```json
+{"ts": "2026-09-21T10:00:00.000000Z", "level": "INFO", "logger": "app.access", "message": "request completed", "module": "middleware", "function": "request_logging_middleware", "line": 35, "method": "POST", "path": "/api/v1/search", "status": 200, "duration_ms": 42.5, "client": "127.0.0.1"}
+```
+
+Attach extra structured fields to any log call with the stdlib `extra` kwarg:
+`logger.info("chunk embedded", extra={"document_id": id, "chunks": n})`. To keep
+uvicorn's own logging from replacing this configuration, run the service with
+`python -m app.main`; the `uvicorn`/`uvicorn.error`/`uvicorn.access` loggers are
+configured from `LOG_LEVEL` / `LOG_FORMAT` in the same setup.
 
 ## API
 
@@ -163,6 +182,7 @@ mypy app
 | Grounded generation with citations | Implemented |
 | Retrieval evaluation (hit rate, MRR) | Implemented |
 | REST API + health/readiness probes | Implemented |
+| Structured logging (JSON / text, access logs) | Implemented |
 | CI/CD workflows, Docker deployment | Planned |
 | Background processing, caching, observability | Planned |
 
@@ -170,7 +190,7 @@ mypy app
 
 - Docker-compose for local Postgres + pgvector, and containerized deployment
 - GitHub Actions CI (lint, type-check, unit + integration tests)
-- Background ingestion jobs, caching, and structured observability (logs/tracing/metrics)
+- Background ingestion jobs, caching, and tracing/metrics (structured logging is done)
 - Additional parsers (reStructuredText, docx) and chunkers
 - Answer generation evaluation (faithfulness/groundedness metrics)
 
