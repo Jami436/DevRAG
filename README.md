@@ -152,15 +152,40 @@ curl http://127.0.0.1:8000/api/v1/health/ready
 curl http://127.0.0.1:8000/api/v1/version
 ```
 
+## Demo
+
+`scripts/demo.py` ingests a real documentation set and shows a grounded answer
+end to end:
+
+```bash
+python scripts/demo.py                       # ingest data/raw and answer the default questions
+python scripts/demo.py --query "What is reciprocal rank fusion?" --top-k 5
+python scripts/demo.py --no-generation       # retrieval only
+```
+
+It walks a docs directory (default `data/raw`), ingests every Markdown/HTML/PDF
+file through the same parse → chunk → embed → store pipeline the API uses, then
+prints the hybrid-retrieval hits with per-signal scores and the grounded answer
+with source citations. It honours `EMBEDDING_PROVIDER`, `RERANKER_PROVIDER` and
+`GENERATION_PROVIDER` from settings, so it works with OpenAI or offline
+providers. Generation requires `GENERATION_PROVIDER=openai` plus
+`OPENAI_API_KEY` (or `none` for the offline canned provider).
+
+Sample docs covering hybrid search, chunking, reciprocal rank fusion and
+grounded answers ship under `data/raw/` and double as demo assets.
+
 ## Demo Assets
 
 ### Data directory structure
 
 ```
 data/
-├── raw/              # Source documentation (Markdown, HTML, PDF files)
-│   └── .gitkeep
-├── processed/        # Chunked/intermediate artifacts
+├── raw/                    # Source documentation (Markdown, HTML, PDF) + demo set
+│   ├── chunking.md
+│   ├── grounded-answers.md
+│   ├── hybrid-retrieval.md
+│   └── reciprocal-rank-fusion.md
+├── processed/              # Chunked/intermediate artifacts
 │   └── .gitkeep
 └── evaluation/
     ├── golden_queries.json  # Golden query set for retrieval/eval
