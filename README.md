@@ -250,16 +250,16 @@ mypy app
 | Retrieval evaluation (hit rate, MRR) | Implemented |
 | REST API + health/readiness probes | Implemented |
 | Structured logging (JSON / text, access logs) | Implemented |
-| CI/CD workflows, Docker deployment | Planned |
+| GitHub Actions CI (lint, type-check, unit + integration) | Implemented |
+| Docker deployment (image, Compose, deployment guide) | Implemented |
 | Background processing, caching, observability | Planned |
 
 ## Roadmap
 
-- Docker-compose for local Postgres + pgvector, and containerized deployment
-- GitHub Actions CI (lint, type-check, unit + integration tests)
 - Background ingestion jobs, caching, and tracing/metrics
 - Additional parsers (reStructuredText, docx) and chunkers
-- Answer generation evaluation (faithfulness/groundedness metrics)
+- Packaging tuning and additional deployment targets (Kubernetes helm chart)
+- Generation evaluation refinements and golden-dataset expansion
 
 ## License
 
